@@ -1,7 +1,7 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Blank
+      <b>Import CSV</b>
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -14,7 +14,38 @@
   </ion-header>
 
   <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <b>import CSV</b>
+    <div class="ion-padding">
+      Status: {{ importSpec.status }}<br>
+      <ion-button (click)="importSpec.abort = !importSpec.abort">abort</ion-button>abort:{{ importSpec.abort }}<br>
+      Input: <input type="file" id="files" multiple><br><br>
+      <b>Source URL:</b> <ion-input [(ngModel)]="importSpec.sourceURL" style="border: 1px;"></ion-input><br>
+      <b>Supabase API URL:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_URL" style="border: 1px solid;"></ion-input><br>
+      <b>Supabase ANON KEY:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_KEY" style="border: 1px solid;"></ion-input><br>
+      <b>Destination Table:</b> <ion-input [(ngModel)]="importSpec.destinationTable" style="border: 1px solid;"></ion-input><br>
+      <ion-textarea [(ngModel)]="importSpec.DDL"></ion-textarea><br>
+<!--
+      sourceType: 'csv',
+      sourceURL: 'https://media.githubusercontent.com/media/burggraf/datasets/main/slogans.txt',
+      delimiter: '\t',
+      enclosedBy: '',
+      fieldNames: '',
+      headerLine: '1',
+      domain: '',
+      port: '',
+      database: '',
+      user: '',
+      password: '',
+      destinationTable: '',
+      truncate: '0',
+      isReady: false,
+      ddl: '',
+      jobId: '',
+      jobName: '',
+      RESULTS: [],
+  -->
+
+      <ion-button (click)="start()" strong expand="block">Start</ion-button>
+    </div>
   </div>
 </ion-content>
