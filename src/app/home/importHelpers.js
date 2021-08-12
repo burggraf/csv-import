@@ -70,7 +70,7 @@ export const analyzeRow = (fieldsHash, row) =>{
       }
   
       // Save the largest length
-      field.maxLength = Math.max(field.maxLength, value.length)
+      field.maxLength = Math.max(field.maxLength, value!==null?value.length:0)
     }
   }
   
