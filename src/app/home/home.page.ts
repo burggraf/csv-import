@@ -43,6 +43,8 @@ export class HomePage {
 
   constructor() {
     console.log(Papa);
+    this.importSpec.SUPABASE_KEY = localStorage.getItem('SUPABASE_KEY');
+    this.importSpec.SUPABASE_URL = localStorage.getItem('SUPABASE_URL');
   }
 
   async start() {
@@ -220,14 +222,21 @@ export class HomePage {
       if (!tbl) {
         console.log('desination table is missing');
       } else {
-        console.log('tbl', tbl);
+        console.log('************ check destination table:', tbl);
+        console.log('this.importSpec.fld', this.importSpec.fld);
         const destinationCheckErrors = [];
         let index = 0;
-        this.importSpec.fld.map(fld => {
-          if (tbl.properties[fld].type.toUpperCase() !==  
-              this.importSpec.typ[index].toUpperCase()) {
+        // fld is empty now... &&&&&
+        console.log('this.importSpec', this.importSpec);
+        console.log('** this.importSpec.fieldNames', this.importSpec.fieldNames);
+        
+        this.importSpec.fieldNames.split(',').map(fld => {
+          console.log('checking fld', fld);
+          console.log('tbl.properties', tbl.properties);
+          if (tbl.properties[fld].format.toUpperCase() !==  
+              this.importSpec.fieldTypes[index].toUpperCase()) {
                 destinationCheckErrors.push(
-                  `Destination table field missing or wrong type: ${fld} ${this.importSpec.typ[index].toUpperCase()} vs. ${tbl.properties[fld].format.toUpperCase()}`);
+                  `Destination table field missing or wrong type: ${fld} ${this.importSpec.fieldTypes[index].toUpperCase()} vs. ${tbl.properties[fld].format.toUpperCase()}`);
           }
           index++;
         });
@@ -243,6 +252,11 @@ export class HomePage {
       }
     }
     
+  }
+
+  inputChange() {
+    localStorage.setItem('SUPABASE_KEY', this.importSpec.SUPABASE_KEY);
+    localStorage.setItem('SUPABASE_URL', this.importSpec.SUPABASE_URL);
   }
 
 }

@@ -21,8 +21,8 @@
       <ion-button (click)="importSpec.ready = !importSpec.ready">ready</ion-button>ready:{{ importSpec.ready }}<br>
       Input: <input type="file" id="files" multiple><br><br>
       <b>Source URL:</b> <ion-input [(ngModel)]="importSpec.sourceURL" style="border: 1px;"></ion-input><br>
-      <b>Supabase API URL:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_URL" style="border: 1px solid;"></ion-input><br>
-      <b>Supabase ANON KEY:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_KEY" style="border: 1px solid;"></ion-input><br>
+      <b>Supabase API URL:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_URL" style="border: 1px solid;" (ionChange)="inputChange()"></ion-input><br>
+      <b>Supabase ANON KEY:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_KEY" style="border: 1px solid;" (ionChange)="inputChange()"></ion-input><br>
       <b>Destination Table:</b> <ion-input [(ngModel)]="importSpec.destinationTable" style="border: 1px solid;"></ion-input><br>
       <ion-textarea [(ngModel)]="importSpec.DDL"></ion-textarea><br>
 <!--
