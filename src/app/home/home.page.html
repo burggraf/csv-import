@@ -18,7 +18,6 @@
     <div class="ion-padding">
       Status: {{ importSpec.status }}<br>
       <ion-button (click)="importSpec.abort = !importSpec.abort">abort</ion-button>abort:{{ importSpec.abort }}<br>
-      <ion-button (click)="importSpec.ready = !importSpec.ready">ready</ion-button>ready:{{ importSpec.ready }}<br>
       Input: <input type="file" id="files" multiple (change)="fileInputChange()"><br><br>
       <b>Source URL:</b> <ion-input [(ngModel)]="importSpec.sourceURL" style="border: 1px;"></ion-input><br>
       <b>Supabase API URL:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_URL" style="border: 1px solid;" (ionChange)="inputChange()"></ion-input><br>

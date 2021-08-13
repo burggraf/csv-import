@@ -13,30 +13,14 @@ export class HomePage {
   public timer = 0;
   private supabase: SupabaseClient;
   public importSpec = {  
-    typ: [],
-    fld: [],
     ready: false,
-    sourceType: 'csv',
     sourceURL: '',
-    delimiter: ',',
-    enclosedBy: '',
     fieldNames: '',
     fieldTypes: [],
     headerLine: '1',
-    domain: '',
-    port: '',
-    database: '',
-    user: '',
-    password: '',
     destinationTable: '',
-    truncate: '0',
-    isReady: false,
-    ddl: '',
     DDL: '',
-    jobId: '',
-    jobName: '',
     status: 'ready',
-    RESULTS: [],
     SUPABASE_URL: '',
     SUPABASE_KEY: ''
   };
@@ -50,12 +34,7 @@ export class HomePage {
   async start() {
     this.timer = +new Date();
     await this.analyzeFile(1024 * 1024 * 20);
-    // console.log('this.importSpec.destinationTable', this.importSpec.destinationTable);
-    // console.log('this.importSPec.ddl', this.importSpec.ddl);
     console.log('this.importSpec', this.importSpec);
-    // console.log('this.DDL', this.DDL);
-    // this.DDL = `CREATE TABLE ${this.importSpec.destinationTable} ` + this.DDL;
-    // console.log('this.DDL', this.DDL);
   }
 
   analyzeFile = async (CHUNKSIZE) => {
@@ -78,7 +57,7 @@ export class HomePage {
       header: true, //(importSpec.headerLine === '1'),
       skipEmptyLines: true,
       dynamicTyping: true,
-      quoteChar: '',
+      quoteChar: '"',
       // LocalChunkSize: 1024 * 1024 * 0.25, // 100 MB
       // RemoteChunkSize: 1024 * 1024 * 100, // 100 MB
       // newline: '\r\n',
@@ -118,26 +97,6 @@ export class HomePage {
           console.log("Row data:", results.data);
           console.log("Row errors:", results.errors);
           console.log('Chunk => Meta', results.meta);  
-          /*
-          if (importSpec.fld.length === 0) {
-            console.log('using this as a template', results.data[0]);
-            for (let f in results.data[0]) {
-              importSpec.fld.push(f);
-              importSpec.typ.push(typeof results.data[0][f]);
-              console.log(f, typeof results.data[0][f]);
-            }
-          } else {
-            for (let i = 0; i < importSpec.fld.length; i++) {
-              if (results.data[0][importSpec.fld[i]] === null) {
-                // field is null
-              } else {
-                if (typeof results.data[0][importSpec.fld[i]] !== importSpec.typ[i]) {
-                  console.error(`type error for field ${importSpec.fld[i]} - ${results.data[0][importSpec.fld[i]]} - ${importSpec.typ[i]}`);
-                }
-              }
-            }
-          }
-          */
           if (!fieldNameArr.length) fieldNameArr = results.meta.fields;
           // console.log('parser', parser);
           results.data.map((row) => {
@@ -159,10 +118,8 @@ export class HomePage {
         const fieldsArray = analyzeRowResults(fieldsHash);
         console.log('fieldsArray', fieldsArray);
         
-        // let DDL = `create table "${getFileName(importSpec.sourceURL, true)}" (`;
         
         console.log('** fieldNameArr', fieldNameArr);
-        importSpec.ddl = [];
         const assignedFieldNames = [];
         let DDL = `(`;
         for (let x = 0; x < fieldsArray.length; x++) {
@@ -177,7 +134,6 @@ export class HomePage {
           }
           DDL += `"${fieldName}" ${fieldsArray[x].type.toUpperCase()}`;
           assignedFieldNames.push(fieldName.trim());
-          importSpec.ddl.push([`${fieldName}`,`${fieldsArray[x].type.toUpperCase()}`]);
           importSpec.fieldTypes.push(fieldsArray[x].type.toUpperCase());
           if (x < fieldsArray.length - 1) DDL += `, `;
         }
@@ -186,7 +142,6 @@ export class HomePage {
         importSpec.DDL = `CREATE TABLE "${importSpec.destinationTable}" ${DDL}`;
         importSpec.fieldNames = assignedFieldNames.join(',');
         importSpec.status = 'analyzed';
-        console.log(importSpec.fld, importSpec.typ);
         checkDestinationTable();
       }
     });
@@ -223,10 +178,8 @@ export class HomePage {
         console.log('desination table is missing');
       } else {
         console.log('************ check destination table:', tbl);
-        console.log('this.importSpec.fld', this.importSpec.fld);
         const destinationCheckErrors = [];
         let index = 0;
-        // fld is empty now... &&&&&
         console.log('this.importSpec', this.importSpec);
         console.log('** this.importSpec.fieldNames', this.importSpec.fieldNames);
         
