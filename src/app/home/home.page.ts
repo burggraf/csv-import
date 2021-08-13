@@ -258,5 +258,17 @@ export class HomePage {
     localStorage.setItem('SUPABASE_KEY', this.importSpec.SUPABASE_KEY);
     localStorage.setItem('SUPABASE_URL', this.importSpec.SUPABASE_URL);
   }
+  fileInputChange() {
+    console.log('** fileInputChange()');
+    if (true || this.importSpec.destinationTable.trim().length === 0) {
+      const fileElement: any = document.getElementById('files');
+      const file = fileElement.files[0];
+      console.log('file', file);
+      let name = file.name;
+      // remove extension from name
+      name = name.substring(0, name.indexOf('.'));
+      this.importSpec.destinationTable = name;
+    }
+  }
 
 }
