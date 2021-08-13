@@ -17,12 +17,17 @@
     <b>import CSV</b>
     <div class="ion-padding">
       Status: {{ importSpec.status }}<br>
+      READY?  {{ importSpec.ready }} <br>
       <ion-button (click)="importSpec.abort = !importSpec.abort">abort</ion-button>abort:{{ importSpec.abort }}<br>
       Input: <input type="file" id="files" multiple (change)="fileInputChange()"><br><br>
       <b>Source URL:</b> <ion-input [(ngModel)]="importSpec.sourceURL" style="border: 1px;"></ion-input><br>
       <b>Supabase API URL:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_URL" style="border: 1px solid;" (ionChange)="inputChange()"></ion-input><br>
       <b>Supabase ANON KEY:</b> <ion-input [(ngModel)]="importSpec.SUPABASE_KEY" style="border: 1px solid;" (ionChange)="inputChange()"></ion-input><br>
       <b>Destination Table:</b> <ion-input [(ngModel)]="importSpec.destinationTable" style="border: 1px solid;"></ion-input><br>
+      <b>Quote Character:</b> <ion-input [(ngModel)]="importSpec.quoteChar" style="border: 1px solid;"></ion-input><br>
+
+<br>      <ion-button (click)="reset()">RESET</ion-button>
+<br>
       <ion-textarea [(ngModel)]="importSpec.DDL"></ion-textarea><br>
 <!--
       sourceType: 'csv',
