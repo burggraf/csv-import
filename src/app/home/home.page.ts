@@ -178,7 +178,7 @@ export class HomePage {
         DDL += `)`;        
         console.log('DDL', DDL);
         importSpec.DDL = `CREATE TABLE "${importSpec.destinationTable}" ${DDL}`;
-        importSpec.fieldNames = assignedFieldNames.join(',');
+        importSpec.fieldNames = assignedFieldNames.join('\t');
         importSpec.status = 'analyzed';
         checkDestinationTable();
       }
@@ -189,6 +189,7 @@ export class HomePage {
     if (!this.supabase) this.supabase = createClient(importSpec.SUPABASE_URL, importSpec.SUPABASE_KEY);
 
     console.log(`-> insert into ${importSpec.destinationTable}`);
+    // console.log('rows', rows);
     const { data, error} = await this.supabase.from(importSpec.destinationTable)
     .insert(rows, {returning: 'minimal'});
     if (error) {
@@ -225,7 +226,7 @@ export class HomePage {
         console.log('this.importSpec', this.importSpec);
         console.log('** this.importSpec.fieldNames', this.importSpec.fieldNames);
         
-        this.importSpec.fieldNames.split(',').map(fld => {
+        this.importSpec.fieldNames.split('\t').map(fld => {
           // console.log('checking fld', fld, tbl.properties);
           // console.log('tbl.properties', tbl.properties);
           if (tbl.properties[fld].format.toUpperCase() !==  
