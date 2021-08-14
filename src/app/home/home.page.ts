@@ -26,7 +26,8 @@ export class HomePage {
     SUPABASE_URL: '',
     SUPABASE_KEY: '',
     count: 0,
-    processed: 0
+    processed: 0,
+    errors: 0
   };
 
   constructor() {
@@ -38,6 +39,7 @@ export class HomePage {
   async start() {
     this.timer = +new Date();
     this.importSpec.count = 0;
+    this.importSpec.errors = 0;
     this.importSpec.processed = 0;
     this.importSpec.abort = false;
     await this.analyzeFile(1024 * 1024 * 20);
@@ -76,10 +78,9 @@ export class HomePage {
       // newline: '\r\n',
       // worker: true,
       chunk: async function(results, parser) {
-        console.log(`***************************************`);
-        console.log(`*** got chunk of ${results.data.length}`);
-        console.log(`*** quoteChar: ${importSpec.quoteChar}`);
-        console.log(`***************************************`);
+        // console.log(`***************************************`);
+        // console.log(`*** got chunk of ${results.data.length}`);
+        // console.log(`***************************************`);
         if (importSpec.abort) parser.abort();
         if (importSpec.ready) {
           parser.pause();
@@ -102,19 +103,18 @@ export class HomePage {
           const { data, error } = await importCSV(importSpec, results.data);
           if (error) {
             console.error('importCSV error', error);
-          } else {
-            console.log('importCSV success');
           }
-          console.log(`Records per sec: ${+((importSpec.processed / (+new Date() - timer)).toFixed(2))}`);
+          console.log(`Records per sec: ${+((importSpec.processed / (+new Date() - timer) * 1000).toFixed(2))}`);
           console.log(`cursor ${results.meta.cursor} / ${(+new Date() - timer)}`);
           console.log(`Bytes per ms: ${+((results.meta.cursor / (+new Date() - timer)).toFixed(2))}`);
           parser.resume();
         } else {
+          console.log('**************************************');
           console.log("Row data.length:", results.data.length);
           console.log("Row errors.length:", results.errors.length);
           console.log('Chunk => Meta', results.meta);
-          console.log('quoteChar', importSpec.quoteChar);
           importSpec.count += results.data.length; 
+          importSpec.errors += results.errors.length;
           if (!fieldNameArr.length) fieldNameArr = results.meta.fields;
           // console.log('parser', parser);
           results.data.map((row) => {
@@ -126,19 +126,18 @@ export class HomePage {
               if ((error.code === 'InvalidQuotes' || error.code === 'TooManyFields') && importSpec.quoteChar === '') {
                 // try changing the quoteChar to a double-quote and start over
                 // start over
+                /*
                 console.log('*****************************************');
                 console.log('******** start over *********************');
                 console.log('*****************************************');
                 importSpec.quoteChar = '"';
-                // importSpec.abort = true;
                 parser.abort();
-                // start();
-                // return;
+                */
               } else {
 
               }
             });
-            console.log('*** there are errors', results.errors);
+            console.log(`*** there are ${results.errors.length} errors`);//, results.errors);
           }
         }
       },
@@ -217,6 +216,8 @@ export class HomePage {
       const tbl = definitions ? definitions[this.importSpec.destinationTable] : null;
       if (!tbl) {
         console.log('desination table is missing');
+        console.log('count: ', this.importSpec.count);
+        console.log('errors: ', this.importSpec.errors);
       } else {
         console.log('************ check destination table:', tbl);
         const destinationCheckErrors = [];
@@ -269,14 +270,19 @@ export class HomePage {
   }
   fileInputChange() {
     console.log('** fileInputChange()');
-    if (true || this.importSpec.destinationTable.trim().length === 0) {
-      const fileElement: any = document.getElementById('files');
-      const file = fileElement.files[0];
-      console.log('file', file);
-      let name = file.name;
-      // remove extension from name
-      name = name.substring(0, name.indexOf('.'));
-      this.importSpec.destinationTable = name;
+    const fileElement: any = document.getElementById('files');
+    const file = fileElement.files[0];
+    console.log('file', file);
+    let name = file.name;
+    // get file extension
+    const ext = name.substr(name.lastIndexOf('.') + 1).toLowerCase();
+    // remove extension from name
+    name = name.substring(0, name.indexOf('.'));
+    this.importSpec.destinationTable = name;
+    if (ext === 'csv') {
+      this.importSpec.quoteChar = '"';
+    } else {
+      this.importSpec.quoteChar = '';
     }
   }
   reset() {
@@ -294,7 +300,8 @@ export class HomePage {
       SUPABASE_URL: this.importSpec.SUPABASE_URL,
       SUPABASE_KEY: this.importSpec.SUPABASE_KEY,
       count: 0,
-      processed: 0
+      processed: 0,
+      errors: 0
     };    
     const fileElement: any = document.getElementById('files');
     let file = fileElement.files[0];
