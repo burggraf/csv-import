@@ -70,6 +70,11 @@ export class HomePage {
       download: false, // true,
       // quoteChar: importSpec.enclosedBy,
       header: true, //(importSpec.headerLine === '1'),
+      transformHeader: importSpec.ready ? (header) => { return header; } : (header) => {
+        // enclose fields names with quotes
+        header = '"' + header.replace(/"/g,'') + '"';
+        return header;
+      },
       skipEmptyLines: true,
       // dynamicTyping: true,
       quoteChar: importSpec.quoteChar,
@@ -170,7 +175,7 @@ export class HomePage {
             // console.log('adding suffix', suffix, 'to fieldName', fieldName);
             fieldName += suffix;
           }
-          DDL += `"${fieldName}" ${fieldsArray[x].type.toUpperCase()}`;
+          DDL += `${fieldName} ${fieldsArray[x].type.toUpperCase()}`;
           assignedFieldNames.push(fieldName.trim());
           importSpec.fieldTypes.push(fieldsArray[x].type.toUpperCase());
           if (x < fieldsArray.length - 1) DDL += `, `;
@@ -188,7 +193,7 @@ export class HomePage {
   importCSV = async (importSpec, rows) => {
     if (!this.supabase) this.supabase = createClient(importSpec.SUPABASE_URL, importSpec.SUPABASE_KEY);
 
-    console.log(`-> insert into ${importSpec.destinationTable}`);
+    console.log(`-> insert into ${importSpec.destinationTable}`);//, rows);
     // console.log('rows', rows);
     const { data, error} = await this.supabase.from(importSpec.destinationTable)
     .insert(rows, {returning: 'minimal'});
@@ -227,6 +232,12 @@ export class HomePage {
         console.log('** this.importSpec.fieldNames', this.importSpec.fieldNames);
         
         this.importSpec.fieldNames.split('\t').map(fld => {
+          if (fld.length > 63) {
+            destinationCheckErrors.push(`column names cannot be more than 63 characters: ${fld}`);
+          }
+        });
+        this.importSpec.fieldNames.split('\t').map(fld => {
+          fld = fld.replace(/"/g,'');
           // console.log('checking fld', fld, tbl.properties);
           // console.log('tbl.properties', tbl.properties);
           if (tbl.properties[fld].format.toUpperCase() !==  
