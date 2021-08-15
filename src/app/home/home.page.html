@@ -28,7 +28,12 @@
 
 <br>      <ion-button (click)="reset()">RESET</ion-button>
 <br>
-      <ion-textarea [(ngModel)]="importSpec.DDL"></ion-textarea><br>
+<!--
+<div>
+  <pre><b>{{ importSpec.DDL }}</b></pre>
+</div>
+-->
+        <ion-textarea [(ngModel)]="importSpec.DDL"></ion-textarea><br>
 <!--
       sourceType: 'csv',
       sourceURL: 'https://media.githubusercontent.com/media/burggraf/datasets/main/slogans.txt',

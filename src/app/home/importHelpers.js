@@ -84,7 +84,7 @@ export const detectType = (sample) =>{
     } else if (isPostgresDateTime(sample)) {
       return 'datetime'
     } else if (!isNaN(sample) && sample.includes('.')) {
-      return 'float'
+      return 'numeric'
     } else if (sample === '1' || sample === '0' || ['true', 'false'].includes(sample.toLowerCase())) {
       return 'boolean'
     } else if (!isNaN(sample)) {
@@ -138,14 +138,16 @@ export const analyzeRowResults = (fieldsHash) => {
 export const determineWinner = (fieldTypes) =>{
     const keys = Object.keys(fieldTypes)
   
-    if (keys.length === 1) {
+    if (keys.length === 1 && keys[0] !== 'null') {
       return keys[0]
     } else if (fieldTypes.text) {
       return 'text'
     } else if (fieldTypes.string) {
-      return 'string'
+      return 'text'
+    } else if (fieldTypes.numeric) {
+      return 'numeric'
     } else if (fieldTypes.float) {
-      return 'float'
+      return 'numeric'
     } else if (fieldTypes.bigint) {
         return 'bigint'
     } else if (fieldTypes.integer) {
@@ -156,7 +158,8 @@ export const determineWinner = (fieldTypes) =>{
       console.log('undetermined field type');
       console.log('keys', keys);
       console.log('fieldTypes', fieldTypes);
-      return fieldTypes[0]
+      if (fieldTypes[0] === 'null') return 'text'
+      else return fieldTypes[0]
     }
   }
   

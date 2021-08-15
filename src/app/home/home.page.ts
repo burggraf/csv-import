@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import Papa from 'papaparse'
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-import { analyzeRow, analyzeRowResults, detectType, determineWinner } from './importHelpers';
+import { analyzeRow, analyzeRowResults } from './importHelpers';
 
 @Component({
   selector: 'app-home',
@@ -63,7 +63,6 @@ export class HomePage {
     const fileElement: any = document.getElementById('files');
     const file = fileElement.files[0];
     let rowCount = 0;
-    let fieldNameArr = [];
     let fieldsArray = [];
     console.log('calling parse with quoteChar', importSpec.quoteChar);
     await Papa.parse(file, {
@@ -76,35 +75,11 @@ export class HomePage {
         return header;
       },
       skipEmptyLines: true,
-      // dynamicTyping: true,
       quoteChar: importSpec.quoteChar,
-      // LocalChunkSize: 1024 * 1024 * 0.25, // 100 MB
-      // RemoteChunkSize: 1024 * 1024 * 100, // 100 MB
-      // newline: '\r\n',
-      // worker: true,
       chunk: async function(results, parser) {
-        // console.log(`***************************************`);
-        // console.log(`*** got chunk of ${results.data.length}`);
-        // console.log(`***************************************`);
         if (importSpec.abort) parser.abort();
-        if (importSpec.ready) {
+        if (importSpec.ready) { // do the actual data import / insert here
           parser.pause();
-          /*
-          console.log(`calling importCSV, ${results.data.length}`);
-          let rows = results.data.splice(0, 5000);
-          console.log(`rows: ${rows.length}, left: ${results.data.length}`);
-          
-          while (results.data.length > 0 && !importSpec.abort) {
-            const { data, error } = await importCSV(importSpec, rows);
-            rows = results.data.splice(0, 5000);
-            if (error) {
-              console.error('importCSV error', error);
-            } else {
-              console.log('importCSV success');
-            }
-            console.log(`rows: ${rows.length}, left: ${results.data.length}`);
-          }
-          */
           const { data, error } = await importCSV(importSpec, results.data);
           if (error) {
             console.error('importCSV error', error);
@@ -113,35 +88,25 @@ export class HomePage {
           console.log(`cursor ${results.meta.cursor} / ${(+new Date() - timer)}`);
           console.log(`Bytes per ms: ${+((results.meta.cursor / (+new Date() - timer)).toFixed(2))}`);
           parser.resume();
-        } else {
+        } else { // analyze the file before importing
           console.log('**************************************');
           console.log("Row data.length:", results.data.length);
           console.log("Row errors.length:", results.errors.length);
           console.log('Chunk => Meta', results.meta);
           importSpec.count += results.data.length; 
           importSpec.errors += results.errors.length;
-          if (!fieldNameArr.length) fieldNameArr = results.meta.fields;
-          // console.log('parser', parser);
           results.data.map((row) => {
             if (rowCount > 0 || (importSpec.headerLine === '0')) analyzeRow(fieldsHash, row);
             rowCount++;
           });  
           if (results.errors.length > 0) {
+            /*
             results.errors.map((error) => {
               if ((error.code === 'InvalidQuotes' || error.code === 'TooManyFields') && importSpec.quoteChar === '') {
-                // try changing the quoteChar to a double-quote and start over
-                // start over
-                /*
-                console.log('*****************************************');
-                console.log('******** start over *********************');
-                console.log('*****************************************');
-                importSpec.quoteChar = '"';
-                parser.abort();
-                */
               } else {
-
               }
             });
+            */
             console.log(`*** there are ${results.errors.length} errors`);//, results.errors);
           }
         }
@@ -151,38 +116,36 @@ export class HomePage {
         console.log('fieldsHash', fieldsHash);
         console.log('fieldNames is now', importSpec.fieldNames);
         console.log('record count', importSpec.count);
-        if (importSpec.ready) {
+        if (importSpec.ready) { // import should be done here
           console.log('READY -> complete function skipped, we should be done.');
           const totalTime = +new Date() - timer;
           console.log(`TOTAL TIME: ${totalTime}`);
           console.log(`Records per sec: ${+((importSpec.processed / (+new Date() - timer) * 1000).toFixed(2))}`);
           return;
-        }
+        } // still analyzing the file here
         const fieldsArray = analyzeRowResults(fieldsHash);
+        console.log('**************************************************');
         console.log('fieldsArray', fieldsArray);
-        
-        
-        console.log('** fieldNameArr', fieldNameArr);
+        console.log('**************************************************');
         const assignedFieldNames = [];
         let DDL = `(`;
         for (let x = 0; x < fieldsArray.length; x++) {
-          let fieldName = (fieldNameArr[x] || 'field').trim();
+          let fieldName = fieldsArray[x].sourceName || 'field'.trim();
           if (assignedFieldNames.indexOf(fieldName) > -1) {
             let suffix = 1;
             while (assignedFieldNames.indexOf(fieldName + suffix) > -1) {
               suffix++;
             }
-            // console.log('adding suffix', suffix, 'to fieldName', fieldName);
             fieldName += suffix;
           }
           DDL += `${fieldName} ${fieldsArray[x].type.toUpperCase()}`;
           assignedFieldNames.push(fieldName.trim());
           importSpec.fieldTypes.push(fieldsArray[x].type.toUpperCase());
-          if (x < fieldsArray.length - 1) DDL += `, `;
+          if (x < fieldsArray.length - 1) DDL += `,\n `;
         }
         DDL += `)`;        
         console.log('DDL', DDL);
-        importSpec.DDL = `CREATE TABLE "${importSpec.destinationTable}" ${DDL}`;
+        importSpec.DDL = `CREATE TABLE "${importSpec.destinationTable}"\n${DDL}`;
         importSpec.fieldNames = assignedFieldNames.join('\t');
         importSpec.status = 'analyzed';
         checkDestinationTable();
@@ -242,7 +205,7 @@ export class HomePage {
           // console.log('tbl.properties', tbl.properties);
           if (tbl.properties[fld].format.toUpperCase() !==  
               this.importSpec.fieldTypes[index].toUpperCase()) {
-                if (tbl.properties[fld].format.toUpperCase() === 'DOUBLE PRECISION' && 
+                if (tbl.properties[fld].format.toUpperCase() === 'NUMERIC' && 
                 this.importSpec.fieldTypes[index].toUpperCase() === 'FLOAT') {
                   // postgres turns float into double precision
                 } else {
