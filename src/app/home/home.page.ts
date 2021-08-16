@@ -18,7 +18,6 @@ export class HomePage {
     sourceURL: '',
     fieldNames: '',
     fieldTypes: [],
-    headerLine: '1',
     destinationTable: '',
     quoteChar: '',
     DDL: '',
@@ -32,17 +31,22 @@ export class HomePage {
 
   constructor() {
     console.log(Papa);
+    // You don't need this if you're getting the ANON key automatically
     this.importSpec.SUPABASE_KEY = localStorage.getItem('SUPABASE_KEY');
     this.importSpec.SUPABASE_URL = localStorage.getItem('SUPABASE_URL');
   }
 
   async start() {
+    // analyzeFile is called twice
+    // once to get the field names and types and check if the file is valid
+    // and once to actually import the file
+    // if importSpec === 'ready' when it's called, the file is imported
     this.timer = +new Date();
     this.importSpec.count = 0;
     this.importSpec.errors = 0;
     this.importSpec.processed = 0;
     this.importSpec.abort = false;
-    await this.analyzeFile(1024 * 1024 * 20);
+    await this.analyzeFile(1024 * 1024 * 20); // 20MB chunk size for analyzing the file
     console.log('this.importSpec', this.importSpec);
   }
 
@@ -68,7 +72,7 @@ export class HomePage {
     await Papa.parse(file, {
       download: false, // true,
       // quoteChar: importSpec.enclosedBy,
-      header: true, //(importSpec.headerLine === '1'),
+      header: true, 
       transformHeader: importSpec.ready ? (header) => { return header; } : (header) => {
         // enclose fields names with quotes
         header = '"' + header.replace(/"/g,'') + '"';
@@ -96,7 +100,7 @@ export class HomePage {
           importSpec.count += results.data.length; 
           importSpec.errors += results.errors.length;
           results.data.map((row) => {
-            if (rowCount > 0 || (importSpec.headerLine === '0')) analyzeRow(fieldsHash, row);
+            if (rowCount > 0) analyzeRow(fieldsHash, row);
             rowCount++;
           });  
           if (results.errors.length > 0) {
@@ -231,7 +235,7 @@ export class HomePage {
           
           console.log('ready to load...');
           this.importSpec.ready = true;
-          this.analyzeFile(1024 * 1024 * 0.25);
+          this.analyzeFile(1024 * 1024 * 0.25); // 0.25 MB chunk size for doing the import
         }
 
       }
@@ -267,7 +271,6 @@ export class HomePage {
       sourceURL: '',
       fieldNames: '',
       fieldTypes: [],
-      headerLine: '1',
       destinationTable: '',
       quoteChar: '',
       DDL: '',
